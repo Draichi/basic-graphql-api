@@ -32,4 +32,31 @@ export class AuthResolver {
 
     return { user, token };
   }
+
+  @Mutation(() => UserResponse)
+  async login(
+    @Arg("input") { email, password }: AuthInput
+  ): Promise<UserResponse> {
+    const existingUser = await UserModel.findOne({ email });
+
+    if (!existingUser) {
+      throw new Error("Invalid login");
+    }
+
+    const valid = await bcrypt.compare(password, existingUser?.password);
+
+    if (!valid) {
+      throw new Error("Invalid login");
+    }
+
+    const payload = {
+      id: existingUser.id,
+    };
+    const token = jwt.sign(
+      payload,
+      process.env.SESSION_SECRET || "asdasd65465"
+    );
+
+    return { user: existingUser, token };
+  }
 }
